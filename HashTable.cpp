@@ -14,7 +14,7 @@ private:
          for(int i=0;i<size;i++){
             sum+=(int)str[i];
          }
-         std::cout<<"Hash Value for "<<str<<"  "<<sum%SIZE<<'\n';
+         //std::cout<<"Hash Value for "<<str<<"  "<<sum%SIZE<<'\n';
          return sum%SIZE;
     }
 public:
@@ -26,26 +26,21 @@ public:
     void init(){
         node** cursor = head_cursor;
         for(int i=0;i<SIZE;i++){
-            //std::cout<<"ENTER";
             *cursor=NULL;
             cursor++;
          }
     }
     void add(char data[],int ID){
-        //std::cout<<"Enter ADD";
         int index = get_hash(data);
-        //std::cout<<"HASH VALUE:  "<<index;
         node** cursor = head_cursor;
         node* temp = new node();
         temp->data = ID;
         temp->next =NULL;
         cursor+=index;
         if(*cursor==NULL){
-            //std::cout<<"Enter";
             *cursor=temp;
         }
         else{
-            //std::cout<<"RENTER";
             temp->next=*cursor;
             *cursor= temp;
         }
@@ -86,11 +81,6 @@ int main(){
     table->get_val("Karthi");
     table->get_val("Vijay");
     table->get_val("Mukesh");
-
-
-
+   
     return 0;
-
-
-
 }
