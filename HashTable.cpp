@@ -7,7 +7,8 @@ enum FIELD{NAME,ID,BIRTH_DATE,EMAIL,MEMO};
 
 struct record{
 
- char  *data[5];
+ char data[5][19];
+ bool isAlive;
  int next[5];
 
 };
@@ -15,7 +16,7 @@ struct record{
 struct Result
 {
     int count;
-    record data;
+    char data[19];
 };
 
 static int record_counter=1;
@@ -24,8 +25,8 @@ static int hash_table[5][200000];
 
 
 int getHash(char *data){
-
-     int hash=5381;
+     
+     unsigned int hash=5381;
      while(*data!='\0'){
          hash=((hash<<5)+hash)+*data;
          data++;
@@ -37,14 +38,12 @@ int getHash(char *data){
 void Add(char *name,char *id,char *birthdate,char *email,char *memo){
     int hash;
     
-    record rcd          ={};
-    rcd.data[ID]        =id;
-    rcd.data[NAME]      =name;
-    rcd.data[BIRTH_DATE]=birthdate;
-    rcd.data[EMAIL]     =email;
-    rcd.data[MEMO]      =memo;
-
-    Record[record_counter]=rcd;
+    strcpy(Record[record_counter].data[ID],id);
+    strcpy(Record[record_counter].data[NAME],name);
+    strcpy(Record[record_counter].data[BIRTH_DATE],birthdate);
+    strcpy(Record[record_counter].data[EMAIL],email);
+    strcpy(Record[record_counter].data[MEMO],memo);
+    Record[record_counter].isAlive=true;
     
     hash = getHash(name);
     Record[record_counter].next[0]=hash_table[0][hash];
@@ -70,56 +69,87 @@ void Add(char *name,char *id,char *birthdate,char *email,char *memo){
     
 }
 
-Result Search(FIELD field,char *data){
+Result Search(FIELD field,char *data,FIELD rfield){
 
     int index = hash_table[field][getHash(data)];
     int count=0;
     Result res;
-    record rec={};
     while(index!=0){
+        if(strcmp(Record[index].data[field],data)==0 && Record[index].isAlive){
+            if(count==0)
+                strcpy(res.data,Record[index].data[rfield]);
+            count++;
+        }
         index=Record[index].next[field];
-        rec = Record[index];
-        count++;
     }
     res.count=count;
-    if(count==1){
-        res.data=rec;
-    }
     return res;
 }
 
-void Change(FIELD field,char *str,FIELD rfield,char *rstr){
+void Change(FIELD field,char *data,FIELD rfield,char *rdata){
 
-    int index = hash_table[field][getHash(str)];
-    int rindex= getHash(rstr);
-    char *prev_data;
-    int p
+    int index = hash_table[field][getHash(data)];
+    int rIndex,rhash,rpIndex;
+    char prev_field_val[19];
     while(index!=0){
-
-        prev_data=Record[index].data[rfield];
-        Record[index].data[rfield]=rstr;
-        
-
-
-
-        Record[index].next[]=hash_table[4][hash];
-        hash_table[4][hash]=record_counter;
-
         index=Record[index].next[field];
+        if(strcmp(Record[index].data[field],data)==0 && Record[index].isAlive){
+
+            strcpy(prev_field_val, Record[index].data[rfield]);
+            strcpy(Record[index].data[rfield],rdata);
+
+            rpIndex=hash_table[rfield][getHash(prev_field_val)];
+            if(strcmp(Record[rpIndex].data[field],data)==0){
+                
+                hash_table[rfield][getHash(prev_field_val)]=Record[rpIndex].next[rfield];
+                goto INIT_SKIP;
+
+            }
+            while(Record[rpIndex].next[rfield]!=0){
+
+               if(strcmp(Record[Record[rpIndex].next[rfield]].data[field],data)==0){
+                
+                Record[rpIndex].next[rfield]=Record[Record[rpIndex].next[rfield]].next[rfield];
+                break;
+               
+               }
+               rpIndex=Record[rpIndex].next[rfield];
+
+            }
+            INIT_SKIP:
+            rhash=getHash(rdata);
+            rIndex = hash_table[rfield][rhash];
+            Record[index].next[rfield]=rIndex;
+            hash_table[rfield][rhash]=index;
+
+        }
+
     }
+
+
+    
 
 }
 
-void Delete(FIELD field,char *data){
+int Delete(FIELD field,char *data){
 
-                 
+    int index = hash_table[field][getHash(data)];
+    int count=0;
+    while(index!=0){
+        if(strcmp(Record[index].data[field],data)==0 && Record[index].isAlive){
+            Record[index].isAlive=false;
+            count++;
+        }
+        index=Record[index].next[field];
+    }
 
+    return count;
 }
 
 void InitDB(){
     
     for(int i=0;i<200000;i++){
-       hash_table[0][i]=hash_table[1][i]=hash_table[2][i]=hash_table[3][i]=0;
+       hash_table[0][i]=hash_table[1][i]=hash_table[2][i]=hash_table[3][i]=hash_table[4][i]=0;
     }
     cout<<"InitDB ends..."<<endl;
 
@@ -141,7 +171,7 @@ void print_util(){
 int main(){
  
     time_t start,end;
-  
+    
     time(&start); 
   
     ios_base::sync_with_stdio(false); 
@@ -149,21 +179,30 @@ int main(){
     InitDB();
 
     Add("karthi","1234","220499","a@gmail.com","Good");
-    Add("karthi","2345","220499","b@gmail.com","Good");
-    Add("karthi","3456","220499","c@gmail.com","Good");
+    Add("naveen","9600","230295","b@gmail.com","Okay");
+    Add("vijay","3456","220196","c@gmail.com","Bad");
+    Add("rishi","3454","220499","a@gmail.com","Good");
+    Add("mukesh","9879","100911","y@gmail.com","Bad");
+    Add("karthi","1343","050778","f@gmail.com","Goo");
     
-    cout<<Search(ID,"1234").count<<endl;
-    cout<<Search(NAME,"karthi").count<<endl;
-    cout<<Search(MEMO,"Good").count<<endl;
-    cout<<Search(BIRTH_DATE,"0000").count<<endl;
+    cout<<"Add Ends....."<<endl;
 
+    cout<<Search(ID,"3454",NAME).count<<endl;
+    cout<<Search(NAME,"karthi",MEMO).count<<endl;
+    cout<<Search(MEMO,"Good",EMAIL).data<<endl;
+    cout<<Search(EMAIL,"a@gmail.com",MEMO).count<<endl;
+
+    cout<<"Search Ends....."<<endl;
+
+    cout<<Delete(NAME,"karthi")<<endl;
+    cout<<Search(NAME,"karthi",MEMO).count<<endl;
+    cout<<Search(BIRTH_DATE,"220499",MEMO).count<<endl;
+    cout<<Search(EMAIL,"a@gmail.com",EMAIL).count<<endl;
     time(&end); 
   
     double time_taken = double(end - start); 
     cout << "Time taken by program is : " << fixed 
          << time_taken << setprecision(10); 
     cout << " sec " << endl; 
-    
     return 1;
 }
-
