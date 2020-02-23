@@ -89,10 +89,10 @@ Result Search(FIELD field,char *data,FIELD rfield){
 void Change(FIELD field,char *data,FIELD rfield,char *rdata){
 
     int index = hash_table[field][getHash(data)];
-    int rIndex,rhash,rpIndex;
+    int rIndex,rhash,rpIndex,t_index;
     char prev_field_val[19];
     while(index!=0){
-        index=Record[index].next[field];
+        t_index=Record[index].next[field];
         if(strcmp(Record[index].data[field],data)==0 && Record[index].isAlive){
 
             strcpy(prev_field_val, Record[index].data[rfield]);
@@ -123,11 +123,9 @@ void Change(FIELD field,char *data,FIELD rfield,char *rdata){
             hash_table[rfield][rhash]=index;
 
         }
-
+        index=t_index;
+       
     }
-
-
-    
 
 }
 
@@ -191,14 +189,23 @@ int main(){
     cout<<Search(NAME,"karthi",MEMO).count<<endl;
     cout<<Search(MEMO,"Good",EMAIL).data<<endl;
     cout<<Search(EMAIL,"a@gmail.com",MEMO).count<<endl;
+    cout<<Search(NAME,"vijay",MEMO).count<<endl;
 
     cout<<"Search Ends....."<<endl;
 
-    cout<<Delete(NAME,"karthi")<<endl;
     cout<<Search(NAME,"karthi",MEMO).count<<endl;
     cout<<Search(BIRTH_DATE,"220499",MEMO).count<<endl;
-    cout<<Search(EMAIL,"a@gmail.com",EMAIL).count<<endl;
     time(&end); 
+
+    Change(NAME,"vijay",EMAIL,"a@gmail.com");
+    Change(EMAIL,"f@gmail.com",EMAIL,"fu@gmail.com");
+    
+
+    cout<<Search(EMAIL,"a@gmail.com",NAME).count<<endl;
+    cout<<Search(EMAIL,"f@gmail.com",NAME).count<<endl;
+    cout<<Search(EMAIL,"fu@gmail.com",NAME).count<<endl;
+    cout<<Delete(NAME,"karthi")<<endl;
+    
   
     double time_taken = double(end - start); 
     cout << "Time taken by program is : " << fixed 
@@ -206,3 +213,4 @@ int main(){
     cout << " sec " << endl; 
     return 1;
 }
+
