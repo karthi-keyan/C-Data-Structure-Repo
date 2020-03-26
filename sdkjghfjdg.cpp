@@ -7,11 +7,11 @@ typedef unsigned int  u32;
 
 struct Message{
     u32 msgID,time;
-    u16 userID,trieNext=0;
+    u16 userID;
 };
 
 struct TrieNode{
-    u16 child[26]={0},message=0;
+    u16 child[26]={0},message[5]={0},counter=0;
 };
 
 static u16 userToUser[1000][1000];
@@ -52,14 +52,46 @@ bool comparator(int index1,int index2){
     return false;
 }
 
+void organizeTrieQueue(int trieIndex,int index){
+
+    int counter = trie[trieIndex].counter,temp;
+
+    if(index!=0){
+            
+        if(counter<4){
+            ++counter;
+            ++trie[trieIndex].counter;
+            trie[trieIndex].message[counter]=index;    
+        }
+        else if(comparator(index,trie[trieIndex].message[4])){
+            trie[trieIndex].message[counter]=index;
+        }
+        else{
+            return;
+        }
+        temp=counter;
+        while(temp>0){
+            if(comparator(trie[trieIndex].message[temp],trie[trieIndex].message[temp-1])){
+                trie[trieIndex].message[temp]   = trie[trieIndex].message[temp]^trie[trieIndex].message[temp-1];
+                trie[trieIndex].message[temp-1] = trie[trieIndex].message[temp]^trie[trieIndex].message[temp-1];
+                trie[trieIndex].message[temp]   = trie[trieIndex].message[temp]^trie[trieIndex].message[temp-1];
+            }
+            else
+                break;
+            temp--;
+        }
+
+    }
+}
+
 void insertIntoTrie(char* hashTag,int index){
     
     int trieIndex=0,alphaIndex,temp;
     hashTag+=9;
     while(*hashTag){
         ++hashTag;
+        //cout<<hashTag<<"\t";
         while(*hashTag!='_' && *hashTag ){
-            
             alphaIndex = *hashTag - 97 ;
             if(trie[trieIndex].child[alphaIndex]==0){
 
@@ -74,16 +106,16 @@ void insertIntoTrie(char* hashTag,int index){
             ++hashTag;
         }
         if(*hashTag=='_')++hashTag;
-        temp = trie[trieIndex].message;
-        trie[trieIndex].message = index;
-        message[index].trieNext = temp;
+        //cout<<trieIndex<<"\t"<<index<<endl;
+        organizeTrieQueue(trieIndex,index);
         trieIndex=0;
     
     }
 }
 
 int searchFromTrie(char* hashTag){
-
+    ++hashTag;
+    //cout<<hashTag<<"\t";
     int trieIndex=0,alphaIndex;
     while(*hashTag){
 
@@ -96,7 +128,8 @@ int searchFromTrie(char* hashTag){
         }
         ++hashTag;
     }
-    return trie[trieIndex].message;
+    //cout<<trieIndex<<endl;
+    return trieIndex;
 }
 
 
@@ -144,36 +177,12 @@ int searchByHashtag(char tagName[],int retIDs[]){
         return 0;
     }
     else{
-
-        while(index!=0){
-            
-            if(counter<4){
-                ++counter;
-                result[counter]=index;    
-            }
-            else if(comparator(index,result[4])){
-                result[counter]=index;
-            }
-            else{
-                continue;
-            }
-            temp=counter;
-            while(temp>0){
-                if(comparator(result[temp],result[temp-1])){
-                    result[temp]   = result[temp]^result[temp-1];
-                    result[temp-1] = result[temp]^result[temp-1];
-                    result[temp]   = result[temp]^result[temp-1];
-                }
-                else
-                    break;
-                temp--;
-            }
-            index=message[index].trieNext;
-        }
+        for(int i=0;i<5 && trie[index].message[i]!=0;i++){
+            retIDs[i]=message[trie[index].message[i]].msgID;
+            ++counter;
+        }    
     }
-    for(int i=0;i<5 && result[i]!=0;i++){
-        retIDs[i]=message[result[i]].msgID;
-    }
+    
     return counter;
 }
 
@@ -270,37 +279,57 @@ void printUser(){
     }
 }
 
+void printResult(int result[]){
+    for(int i=0;i<=4;i++){
+        cout<<result[i]<<" ";
+    }
+    cout<<endl;
+}
+
 int main(){
     
     init();
-    
-    createMessage(1111,1,"00:32:45_#parrot_#papa");
-    createMessage(2222,2,"23:32:45_#party");
-    createMessage(3333,3,"23:32:45_#papa");
-    createMessage(4444,4,"23:32:45_#pop");
-    createMessage(5555,5,"23:32:45_#p");
-
-    printUtilMess();
-    //printUtilTrie();
-
-    followUser(1,2);
-    followUser(1,3);
-    followUser(1,5);
-    followUser(2,3);
-
-    printUser();
-
     int result[]={0,0,0,0,0};
 
-    //searchByHashtag("papadsfhjk",result);
-
+    createMessage(1,111,"01:12:34_#watch_#work");
+    createMessage(5,222,"01:12:34_#game");
+    createMessage(3,333,"01:12:34_#dinner_#watch");
+    createMessage(9,333,"01:12:37_#dog_#eat");
+    followUser(222,333);
+    searchByHashtag("#event",result);
+    printResult(result);
     getMessages(6,result);
+    printResult(result);
+    createMessage(2,333,"01:12:38_#dog_#eat");
+    getMessages(222,result);
+    printResult(result);
+    followUser(111,333);
+    createMessage(7,333,"01:13:00_#watch_#game");
+    searchByHashtag("#game",result);
+    printResult(result);
+    createMessage(8,333,"01:14:00_#watch_#eat");
+    followUser(333,111);
+    getMessages(333,result);
+    printResult(result);
+    createMessage(6,333,"01:15:07_#table_#watch");
+    getMessages(111,result);
+    printResult(result);
+    createMessage(4,111,"01:15:10_#dinner_#watch");
+    searchByHashtag("#watch",result);//4 6 8 7 1
+    printResult(result);
+    searchByHashtag("#eat",result);//8 2 9 
+    printResult(result);
+    
 
-    for(int i=0;i<=4;i++){
+    
+    
+    
+    
+    
+    
+    
+    
 
-        cout<<result[i]<<" "<<endl;
-
-    }
 
 }
 
