@@ -24,10 +24,7 @@ struct tweet{
     int heap_counter=0;
 
     Twitter() {
-        for(int i=0;i<750;++i){
-            friendList[i]=NULL;
-            personToTweet[i]=NULL;
-        }
+
     }
     
     void postTweet(int userId, int tweetId) {
